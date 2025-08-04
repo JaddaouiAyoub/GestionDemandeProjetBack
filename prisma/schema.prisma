@@ -1,13 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
-
 
 datasource db {
   provider = "mysql"
@@ -15,13 +8,60 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  role     Role    @default(USER)
+  id        Int       @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String    @unique
+  password  String
+  phone     String?
+  address   String?
+  role      Role
+  createdAt DateTime  @default(now())
+  demandes  Demande[] // 1 user → N demandes
+}
+
+model Demande {
+  id          Int         @id @default(autoincrement())
+  titre       String
+  ville       String
+  adresse     String
+  type        TypeDemande
+  description String
+  status      StatusDemande @default(EN_ATTENTE)
+  remarques   String?
+  createdAt   DateTime    @default(now())
+  clientId    Int
+  client      User        @relation(fields: [clientId], references: [id])
+  documents   Document[]  // 1 demande → N documents
+}
+
+model Document {
+  id         Int      @id @default(autoincrement())
+  filename   String
+  path       String   // ex: /uploads/file.pdf
+  uploadedAt DateTime @default(now())
+  demandeId  Int
+  demande    Demande  @relation(fields: [demandeId], references: [id])
 }
 
 enum Role {
-  ADMIN
-  USER
+  CLIENT
+  RESPONSABLE_AEP
+  RESPONSABLE_ASSEU
+  DIRECTEUR
 }
+
+enum TypeDemande {
+  AEP
+  ASSEU
+  LES_DEUX
+}
+
+enum StatusDemande {
+  EN_ATTENTE
+  VALIDE
+  A_CORRIGER
+}
+
+
+
