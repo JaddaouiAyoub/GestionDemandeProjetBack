@@ -86,3 +86,20 @@ exports.createDemandeWithFiles = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la création de la demande.' });
   }
 };
+
+exports.getClientDemandes = async (req, res) => {
+  try {
+    const clientId = req.user.id;
+
+    const demandes = await prisma.demande.findMany({
+      where: { clientId },
+      include: { documents: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.status(200).json({ success: true, data: demandes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des demandes.' });
+  }
+};

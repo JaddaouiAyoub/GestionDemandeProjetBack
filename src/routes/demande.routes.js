@@ -13,4 +13,11 @@ router.post(
   upload.array('documents'), // "documents" = nom du champ dans FormData
   demandeController.createDemandeWithFiles
 );
+
+router.get(
+  '/mes-demandes',
+  authenticate,
+  authorize('CLIENT'),
+  demandeController.getClientDemandes
+);
 module.exports = router;
