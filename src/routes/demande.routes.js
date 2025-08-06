@@ -20,4 +20,13 @@ router.get(
   authorize('CLIENT'),
   demandeController.getClientDemandes
 );
+
+router.get(
+  '/par-type/:type',
+  authenticate,
+  authorize('RESPONSABLE_AEP'),
+  demandeController.getDemandesByType
+);
+
+
 module.exports = router;

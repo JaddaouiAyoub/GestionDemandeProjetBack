@@ -103,3 +103,42 @@ exports.getClientDemandes = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la récupération des demandes.' });
   }
 };
+
+// GET /demandes/by-type/:type
+
+exports.getDemandesByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    if (!['AEP', 'ASSEU', 'LES_DEUX'].includes(type)) {
+      return res.status(400).json({ success: false, message: 'Type invalide.' });
+    }
+
+    // Types à inclure dans la recherche
+    let typesToFind = [];
+    if (type === 'AEP' || type === 'ASSEU') {
+      typesToFind = [type, 'LES_DEUX'];
+    } else if (type === 'LES_DEUX') {
+      typesToFind = ['LES_DEUX'];
+    }
+
+    const demandes = await prisma.demande.findMany({
+      where: {
+        type: { in: typesToFind }
+      },
+      // include: {
+      //   client: true,
+      //   documents: true
+      // },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.status(200).json({ success: true, data: demandes });
+  } catch (error) {
+    console.error('Erreur getDemandesByType:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};
+
