@@ -142,3 +142,25 @@ exports.getDemandesByType = async (req, res) => {
   }
 };
 
+exports.getDemandeById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const demande = await prisma.demande.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        client: true,
+        documents: true
+      }
+    });
+
+    if (!demande) {
+      return res.status(404).json({ success: false, message: 'Demande non trouvée.' });
+    }
+
+    res.status(200).json({ success: true, data: demande });
+  } catch (error) {
+    console.error('Erreur getDemandeById:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};

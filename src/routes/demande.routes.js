@@ -28,5 +28,9 @@ router.get(
   demandeController.getDemandesByType
 );
 
+router.get('/:id',
+  authenticate,
+  demandeController.getDemandeById);
+
 
 module.exports = router;
