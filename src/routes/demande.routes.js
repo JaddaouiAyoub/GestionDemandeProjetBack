@@ -24,13 +24,20 @@ router.get(
 router.get(
   '/par-type/:type',
   authenticate,
-  authorize('RESPONSABLE_AEP'),
+  authorize('RESPONSABLE_AEP','RESPONSABLE_ASSEU','DIRECTEUR'),
   demandeController.getDemandesByType
 );
 
 router.get('/:id',
   authenticate,
   demandeController.getDemandeById);
+
+router.put(
+  '/:id/status',
+  authenticate,
+  authorize('RESPONSABLE_AEP','RESPONSABLE_ASSEU'),
+  demandeController.updateDemandeStatus
+);
 
 
 module.exports = router;

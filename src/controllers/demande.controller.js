@@ -164,3 +164,32 @@ exports.getDemandeById = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 };
+
+exports.updateDemandeStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, remarques } = req.body;
+
+    const allowedStatuses = ['ACCEPTEE', 'DOCUMENT_MANQUANT', 'EN_ETUDE', 'A_CORRIGER', 'REFUSEE'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Statut invalide.' });
+    }
+
+    const updatedDemande = await prisma.demande.update({
+      where: { id: parseInt(id) },
+      data: {
+        status,
+        remarques: remarques || '', // facultatif
+      },
+      include: {
+        client: true,
+        documents: true
+      }
+    });
+
+    res.status(200).json({ success: true, data: updatedDemande });
+  } catch (error) {
+    console.error('Erreur updateDemandeStatus:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};

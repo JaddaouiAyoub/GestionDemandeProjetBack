@@ -59,7 +59,8 @@ enum TypeDemande {
 
 enum StatusDemande {
   EN_ATTENTE
-  VALIDE
+  EN_ETUDE
+  ACCEPTEE
   A_CORRIGER
 }
 
