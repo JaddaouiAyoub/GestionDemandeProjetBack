@@ -168,6 +168,7 @@ exports.getDemandeById = async (req, res) => {
 exports.updateDemandeStatus = async (req, res) => {
   try {
     const { id } = req.params;
+    const clientId = req.user.id;
     const { status, remarques } = req.body;
 
     const allowedStatuses = ['ACCEPTEE', 'DOCUMENT_MANQUANT', 'EN_ETUDE', 'A_CORRIGER', 'REFUSEE'];
@@ -179,7 +180,7 @@ exports.updateDemandeStatus = async (req, res) => {
       where: { id: parseInt(id) },
       data: {
         status,
-        remarques: remarques || '', // facultatif
+        remarques: remarques || '', // optionnel
       },
       include: {
         client: true,
@@ -187,9 +188,21 @@ exports.updateDemandeStatus = async (req, res) => {
       }
     });
 
+    // Si la demande est acceptée, créer un DossierEtude associé
+    if (status === 'ACCEPTEE') {
+      await prisma.dossierEtude.create({
+        data: {
+          demandeId: updatedDemande.id,
+          clientId: updatedDemande.clientId,
+          // createdAt est rempli automatiquement par Prisma
+        }
+      });
+    }
+
     res.status(200).json({ success: true, data: updatedDemande });
   } catch (error) {
     console.error('Erreur updateDemandeStatus:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 };
+

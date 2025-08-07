@@ -18,6 +18,7 @@ model User {
   role      Role
   createdAt DateTime  @default(now())
   demandes  Demande[] // 1 user → N demandes
+  dossiersEtude DossierEtude[] // ✅ relation inverse
 }
 
 model Demande {
@@ -33,6 +34,8 @@ model Demande {
   clientId    Int
   client      User        @relation(fields: [clientId], references: [id])
   documents   Document[]  // 1 demande → N documents
+  
+  dossierEtude DossierEtude? // ✅ Relation 1:1 inverse
 }
 
 model Document {
@@ -42,7 +45,29 @@ model Document {
   uploadedAt DateTime @default(now())
   demandeId  Int
   demande    Demande  @relation(fields: [demandeId], references: [id])
+  dossierEtudeId Int?          // ← clé étrangère facultative
+  dossierEtude   DossierEtude? @relation(fields: [dossierEtudeId], references: [id])
 }
+
+model DossierEtude {
+  id         Int              @id @default(autoincrement())
+  createdAt  DateTime         @default(now())
+  remarques  String?
+  status     StatusDossierEtude @default(EN_COURS)
+  clientId   Int
+  demandeId  Int @unique
+
+  client     User             @relation(fields: [clientId], references: [id])
+  demande    Demande          @relation(fields: [demandeId], references: [id])
+  documents  Document[]       // 1 dossier → N documents
+}
+
+enum StatusDossierEtude {
+  EN_COURS
+  ACCEPTEE
+  A_CORRIGER
+}
+
 
 enum Role {
   CLIENT
