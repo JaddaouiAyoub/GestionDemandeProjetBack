@@ -87,6 +87,66 @@ exports.createDemandeWithFiles = async (req, res) => {
   }
 };
 
+exports.updateDemandeDocuments = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+
+    const demande = await prisma.demande.findUnique({
+      where: { id: parseInt(id) },
+      include: { client: true }
+    });
+
+    if (!demande) return res.status(404).json({ message: 'Demande introuvable' });
+
+    if (user.role === 'CLIENT' && demande.clientId !== user.id) {
+      return res.status(403).json({ message: 'Non autorisé' });
+    }
+
+    const files = req.files;
+    const labels = Array.isArray(req.body.labels) ? req.body.labels : [req.body.labels];
+
+    if (labels.length !== files.length) {
+      return res.status(400).json({ message: 'Labels et fichiers incohérents.' });
+    }
+
+    // Supprimer ancien fichier avec même label
+    for (let i = 0; i < files.length; i++) {
+      const label = labels[i];
+      await prisma.document.deleteMany({
+        where: {
+          demandeId: demande.id,
+          label
+        }
+      });
+    }
+
+    const newDocs = files.map((file, i) => ({
+      filename: file.originalname,
+      path: file.path.replace(/\\/g, '/'),
+      label: labels[i],
+      demandeId: demande.id
+    }));
+
+    await prisma.document.createMany({ data: newDocs });
+
+    const updated = await prisma.demande.findUnique({
+      where: { id: demande.id },
+      include: {
+        documents: true,
+        client: true
+      }
+    });
+
+    res.status(200).json({ success: true, data: updated });
+
+  } catch (error) {
+    console.error('Erreur updateDemandeDocuments:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour des documents.' });
+  }
+};
+
+
 exports.getClientDemandes = async (req, res) => {
   try {
     const clientId = req.user.id;
