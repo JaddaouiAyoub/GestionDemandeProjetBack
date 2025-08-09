@@ -38,6 +38,8 @@ router.put(
   authorize('RESPONSABLE_AEP','RESPONSABLE_ASSEU'),
   demandeController.updateDemandeStatus
 );
+router.put('/:id/documents', authenticate, upload.array('documents'), demandeController.updateDemandeDocuments);
+
 
 
 module.exports = router;
