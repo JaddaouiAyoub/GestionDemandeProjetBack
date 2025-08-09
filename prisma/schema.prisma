@@ -19,6 +19,7 @@ model User {
   createdAt DateTime  @default(now())
   demandes  Demande[] // 1 user → N demandes
   dossiersEtude DossierEtude[] // ✅ relation inverse
+  dossierExecution DossierExecution[]
 }
 
 model Demande {
@@ -36,6 +37,7 @@ model Demande {
   documents   Document[]  // 1 demande → N documents
   
   dossierEtude DossierEtude? // ✅ Relation 1:1 inverse
+  dossierExecution DossierExecution?
 }
 
 model Document {
@@ -47,9 +49,24 @@ model Document {
   demande    Demande  @relation(fields: [demandeId], references: [id])
   dossierEtudeId Int?          // ← clé étrangère facultative
   dossierEtude   DossierEtude? @relation(fields: [dossierEtudeId], references: [id])
+  dossierExecutionId Int?          // ← clé étrangère facultative
+  dossierExecution   DossierExecution? @relation(fields: [dossierExecutionId], references: [id])
+  label String?
 }
 
 model DossierEtude {
+  id         Int              @id @default(autoincrement())
+  createdAt  DateTime         @default(now())
+  remarques  String?
+  status     StatusDossierEtude @default(EN_COURS)
+  clientId   Int
+  demandeId  Int @unique
+
+  client     User             @relation(fields: [clientId], references: [id])
+  demande    Demande          @relation(fields: [demandeId], references: [id])
+  documents  Document[]       // 1 dossier → N documents
+}
+model DossierExecution {
   id         Int              @id @default(autoincrement())
   createdAt  DateTime         @default(now())
   remarques  String?

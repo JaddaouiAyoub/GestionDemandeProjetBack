@@ -4,12 +4,15 @@ require('dotenv').config();
 const cors = require('cors')
 const authRoutes = require('./routes/auth.routes');
 const demandeRoutes = require('./routes/demande.routes');
+const dossierEtudeRoutes = require('./routes/dossierEtude.routes');
+const dossierExecutionRoutes = require('./routes/dossierExecution.routes');
 
 const path = require('path')
 app.use(cors()) // autorise toutes les origines
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/demandes', demandeRoutes);
+app.use('/api/dossierEtude',dossierEtudeRoutes);
 // 🔥 Ligne à ajouter pour servir le dossier uploads correctement
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
