@@ -13,6 +13,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/demandes', demandeRoutes);
 app.use('/api/dossierEtude',dossierEtudeRoutes);
+app.use('/api/dossierExecution',dossierExecutionRoutes);
 // 🔥 Ligne à ajouter pour servir le dossier uploads correctement
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
