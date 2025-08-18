@@ -20,6 +20,7 @@ model User {
   demandes  Demande[] // 1 user → N demandes
   dossiersEtude DossierEtude[] // ✅ relation inverse
   dossierExecution DossierExecution[]
+  visites          Visite[]          // ← NEW : visites effectuées par cet utilisateur (responsable)
 }
 
 model Demande {
@@ -52,6 +53,9 @@ model Document {
   dossierExecutionId Int?          // ← clé étrangère facultative
   dossierExecution   DossierExecution? @relation(fields: [dossierExecutionId], references: [id])
   label String?
+
+    // ✅ Relation 1:1 avec Visite, seulement définie ici
+  visite   Visite?   @relation("VisiteDocument")
 }
 
 model DossierEtude {
@@ -77,6 +81,27 @@ model DossierExecution {
   client     User             @relation(fields: [clientId], references: [id])
   demande    Demande          @relation(fields: [demandeId], references: [id])
   documents  Document[]       // 1 dossier → N documents
+  // ✅ Ajout : un dossier d’exécution peut avoir plusieurs visites
+  visites    Visite[]
+}
+
+model Visite {
+  id                  Int               @id @default(autoincrement())
+  date                DateTime
+  remarques           String?
+  createdAt           DateTime          @default(now())
+
+  // Responsable qui a effectué la visite
+  responsableId       Int
+  responsable         User              @relation(fields: [responsableId], references: [id])
+
+  // Lien vers le dossier d'exécution
+  dossierExecutionId  Int
+  dossierExecution    DossierExecution  @relation(fields: [dossierExecutionId], references: [id])
+  typeVisite String?
+  // Document associé (optionnel). @unique pour garantir 1 doc par visite.
+  documentId          Int?              @unique
+  document            Document?         @relation("VisiteDocument", fields: [documentId], references: [id])
 }
 
 enum StatusDossierEtude {
