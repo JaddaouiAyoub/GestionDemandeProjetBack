@@ -67,7 +67,7 @@ exports.getVisiteById = async (req, res) => {
                 titre: true,
                 description: true,
                 type: true,
-                
+                ville:true
               }
             }
           }
