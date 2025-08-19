@@ -22,31 +22,92 @@ exports.getClientDossiers = async (req, res) => {
   }
 };
 
-// 2. Modifier le statut d’un dossier d’étude
+// 2. Modifier le statut d’un dossier d’étude avec gestion du type LES_DEUX
 exports.updateDossierStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, remarques } = req.body;
+    const user = req.user; // injecté par middleware auth (contient role/responsable)
 
     const allowedStatuses = ['EN_COURS', 'ACCEPTEE', 'A_CORRIGER'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Statut invalide.' });
     }
 
-    const dossier = await prisma.dossierExecution.update({
+    // On récupère le dossier et sa demande
+    const dossier = await prisma.dossierExecution.findUnique({
       where: { id: parseInt(id) },
-      data: {
-        status,
-        remarques: remarques || '',
-      },
+      include: { demande: true }
     });
 
-    res.status(200).json({ success: true, data: dossier });
+    if (!dossier) {
+      return res.status(404).json({ success: false, message: 'Dossier introuvable.' });
+    }
+
+    let newStatus = status;
+
+    // ⚡ Cas particulier : demande LES_DEUX
+    if (dossier.demande.type === "LES_DEUX" && status === "ACCEPTEE") {
+      if (user.role === "RESP_AEP") {
+        newStatus = "ACCEPTEE_AEP";
+      } else if (user.role === "RESP_ASSEU") {
+        newStatus = "ACCEPTEE_ASSEU";
+      }
+    }
+
+    // Mise à jour du dossier
+    const updated = await prisma.dossierExecution.update({
+      where: { id: dossier.id },
+      data: {
+        status: newStatus,
+        remarques: remarques || ''
+      }
+    });
+
+    // ⚡ Vérification si on peut passer en ACCEPTEE finale
+    if (dossier.demande.type === "LES_DEUX") {
+      const dossierCheck = await prisma.dossierExecution.findUnique({
+        where: { id: dossier.id }
+      });
+
+      if (
+        dossierCheck.status === "ACCEPTEE_AEP" ||
+        dossierCheck.status === "ACCEPTEE_ASSEU"
+      ) {
+        // On attend l’autre validation
+        return res.status(200).json({
+          success: true,
+          message: "Validation partielle enregistrée. En attente de l’autre responsable.",
+          data: dossierCheck
+        });
+      }
+
+      if (
+        dossierCheck.status === "ACCEPTEE_AEP" &&
+        newStatus === "ACCEPTEE_ASSEU" ||
+        dossierCheck.status === "ACCEPTEE_ASSEU" &&
+        newStatus === "ACCEPTEE_AEP"
+      ) {
+        // Si les deux sont validés, on met ACCEPTEE finale
+        const finalDossier = await prisma.dossierExecution.update({
+          where: { id: dossier.id },
+          data: { status: "ACCEPTEE" }
+        });
+        return res.status(200).json({
+          success: true,
+          message: "Dossier validé par AEP et ASSEU. Statut final : ACCEPTEE.",
+          data: finalDossier
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: updated });
   } catch (error) {
-    console.error('Erreur updateDossierStatus:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    console.error("Erreur updateDossierStatus:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur." });
   }
 };
+
 
 exports.updateDossierWithFiles = async (req, res) => {
   try {
